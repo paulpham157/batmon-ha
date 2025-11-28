@@ -58,6 +58,10 @@ def round_to_n(x, n):
         raise e
 
 
+def capitalize_words(s):
+    return ' '.join(word[0].upper() + word[1:] for word in s.split())
+
+
 def disable_warnings():
     global no_publish_fail_warn
     no_publish_fail_warn = True
@@ -135,7 +139,7 @@ sample_desc = {
         "state_class": "measurement",
         "unit_of_measurement": "V",
         "precision": 2,
-        "significant_digits": 4, # round_to_n
+        "significant_digits": 4,  # round_to_n
         "icon": "meter-electric"},
     "soc/current": {
         "field": "current",
@@ -166,7 +170,7 @@ sample_desc = {
         "device_class": "power",
         "state_class": "measurement",
         "unit_of_measurement": "W",
-        "precision": 3,
+        "precision": 1,
         "significant_digits": 4,
         "icon": "flash"},
     "soc/capacity": {
@@ -278,7 +282,7 @@ def publish_hass_discovery(client, device_topic, expire_after_seconds: int, samp
                         precision=None):
         dm = {
             "unique_id": f"{device_topic}__{k.replace('/', '_')}",
-            "name": name or k.replace('/', ' '),
+            "name": name or capitalize_words(k.replace('/', ' ')),
             "device_class": device_class or None,
             "state_class": state_class or None,
             "unit_of_measurement": unit,
@@ -298,8 +302,13 @@ def publish_hass_discovery(client, device_topic, expire_after_seconds: int, samp
 
     for k, d in sample_desc.items():
         if not is_none_or_nan(getattr(sample, d["field"])):
-            _hass_discovery(k, d["device_class"], state_class=d["state_class"], unit=d["unit_of_measurement"],
-                            icon=d.get('icon', None), name=d["field"], precision=d.get("precision", None))
+            _hass_discovery(k, d["device_class"],
+                            state_class=d["state_class"],
+                            unit=d["unit_of_measurement"],
+                            icon=d.get('icon', None),
+                            name=capitalize_words(d["field"]),
+                            precision=d.get("precision", None)
+                            )
 
     for i in range(0, num_cells):
         k = 'cell_voltages/%d' % (i + 1)
@@ -324,16 +333,17 @@ def publish_hass_discovery(client, device_topic, expire_after_seconds: int, samp
     meters = {
         # state_class see https://developers.home-assistant.io/docs/core/entity/sensor/#long-term-statistics
         # this enables the meters to appear in HA Energy Grid
-        'total_energy': dict(device_class="energy", unit="kWh", icon="meter-electric"),  # state_class="total",
+        'total_energy': dict(device_class="energy", unit="kWh", icon="meter-electric", name="total energy netted"),
+        # state_class="total",
         'total_energy_charge': dict(device_class="energy", state_class="total_increasing", unit="kWh",
-                                    icon="meter-electric"),
+                                    icon="meter-electric", name="total energy input"),
         'total_energy_discharge': dict(device_class="energy", state_class="total_increasing", unit="kWh",
-                                       icon="meter-electric"),
-        'total_charge': dict(device_class=None, unit="Ah"),
-        'total_cycles': dict(device_class=None, unit="N", icon="battery-sync"),
+                                       icon="meter-electric", name="total energy output"),
+        'total_charge': dict(device_class=None, unit="Ah", name="total charge netted"),
+        'total_cycles': dict(device_class=None, unit="N", icon="battery-sync", name="total cycle count"),
     }
     for name, m in meters.items():
-        _hass_discovery('meter/%s' % name, **m, name=name.replace('_', ' ') + " meter", long_expiry=True, precision=3)
+        _hass_discovery('meter/%s' % name, **m, long_expiry=True, precision=2)
 
     switches = (sample.switches and sample.switches.keys())
     if switches:
