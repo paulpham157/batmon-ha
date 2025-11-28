@@ -13,6 +13,7 @@ from bleak.backends.characteristic import BleakGATTCharacteristic
 
 from . import FuturesPool
 from .bms import BmsSample, DeviceInfo
+from .scan import resolve_address, get_shared_scanner
 from .util import get_logger
 from .wired import SerialServiceStub, SerialCharStub
 
@@ -37,14 +38,25 @@ async def bt_discovery(logger, timeout: int = 5):
     from bmslib.scan import get_shared_scanner
     scanner = await get_shared_scanner()
     await asyncio.sleep(timeout)
-    devices = scanner.discovered_devices
-    if not devices:
-        logger.info(' - no devices found - ')
+    if hasattr(scanner, 'discovered_devices_and_advertisement_data'):
+        devices = scanner.discovered_devices_and_advertisement_data
+        addr_len = (max(len(d.address) for d, a in devices.values()) + 1) if devices else 20
+        if not devices:
+            logger.info(' - no devices found - ')
+        else:
+            logger.info("BT %*s %26s %4s", addr_len, 'addr', 'name', 'rssi')
+        for d, a in devices.values():
+            logger.info("BT %*s %26s %4s", addr_len, d.address, d.name, a.rssi)
+        return [d for d, a in devices.values()]
     else:
-        logger.info("BT %18s %26s", 'addr', 'name')
-    for d in devices:
-        logger.info("BT %s %26s", d.address, d.name)
-    return devices
+        devices = scanner.discovered_devices
+        if not devices:
+            logger.info(' - no devices found - ')
+        else:
+            logger.info("BT %18s %26s", 'addr', 'name')
+        for d in devices:
+            logger.info("BT %s %26s", d.address, d.name)
+        return devices
 
 
 def bleak_version() -> str:
