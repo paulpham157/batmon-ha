@@ -28,6 +28,11 @@ I created this to compare BMS readings for a detailed evaluation of BMS reliabil
 
 ### Supported Devices (bluetooth low energy)
 
+Batmon comes with connectors for some popular BMS. It also wraps `aiobmsble`, which includes many other BMS for
+read-only access.
+
+batmon device connectors:
+
 * JK BMS / jikong with JK02 protocol (`jk`)
 * Daly BMS (`daly`, `daly2`, `daly_ble`)
 * JBD / Jiabaida/ Xiaoxiang / Overkill Solar BMS (`jbd`)
@@ -42,6 +47,9 @@ I created this to compare BMS readings for a detailed evaluation of BMS reliabil
   and [enable GATT](https://community.victronenergy.com/questions/93919/victron-bluetooth-ble-protocol-publication.html)
   in the VictronConnect app) (`victron`)
 * ATORCH CW20 DC (`cw20`)
+
+`aioblebms` device connectors:
+
 * `tdt`
 * `ej`
 * `abc`
@@ -58,7 +66,11 @@ I created this to compare BMS readings for a detailed evaluation of BMS reliabil
 * `renogy`, `renogy_pro`
 * all devices [aiobmsble](https://github.com/patman15/aiobmsble/?tab=readme-ov-file#supported-devices) supports
 
-I tested the add-on on a Raspberry Pi 4 using Home Assistant Operating System.
+You can switch from the batmon to the aiobmsble connectors, just append a `_ble` to the `type` field, e.g. instead
+of `type: daly` (batmon), write `type: daly_ble` (aiobmsble). This can help if you experience connection issues, because
+some of the `aiobmsble` connectors are more up to date.
+
+I tested the add-on on a Raspberry Pi 4 and 5 using Home Assistant Operating System.
 
 ## Installation
 
